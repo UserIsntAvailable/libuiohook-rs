@@ -2,8 +2,6 @@
 
 //! Raw bindings for `libuiohook`.
 
-// TODO(Unavailable): Rename all instances of `r#type` -> `kind`?
-//
 // DOCS(Unavailable): Document all items.
 //
 // fn docs: https://github.com/kwhat/libuiohook/tree/1.2/man
@@ -11,7 +9,10 @@
 #[rustfmt::skip]
 mod inner {
 
-use core::ffi::{c_char, c_uchar, c_uint, c_int, c_long};
+use core::{
+    ffi::{c_char, c_uchar, c_uint, c_int, c_long},
+    fmt, hash
+};
 
 /* Begin Error Codes */
 
@@ -89,6 +90,8 @@ pub struct screen_data {
 
 macro_rules! _keyboard_event_data {
     (@pub struct $name:ident) => {
+        // TODO(Unavailable): Implement `{Partial}Ord` in terms of `keycode`?
+
         #[repr(C)]
         #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
         pub struct $name {
@@ -106,6 +109,8 @@ _keyboard_event_data!(@pub struct key_typed_event_data   );
 
 macro_rules! _mouse_event_data {
     (@pub struct $name:ident) => {
+        // TODO(Unavailable): Implement `{Partial}Ord` in terms of `button`?
+
         #[repr(C)]
         #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
         pub struct $name {
@@ -143,10 +148,11 @@ pub union input_event_data {
 }
 
 // TODO(Unavailable): Implement `{Partial}Ord` in terms of `time`?
-// TODO(Unavailable): Manual implementations for Debug, PartialEq, Eq and Hash.
+//
+// DOCS(Unavailable): Safety concerns around `r#type` and `data` mismatch.
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct uiohook_event {
     pub r#type: event_type,
     pub time: u64,
@@ -155,7 +161,101 @@ pub struct uiohook_event {
     pub data: input_event_data,
 }
 
-// TODO(Unavailable): Can the pointer be null?
+impl fmt::Debug for uiohook_event {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use event_type as et;
+
+        let mut strt = f.debug_struct("uiohook_event");
+
+        strt.field("time", &self.time)
+            .field("mask", &self.mask)
+            .field("reserved", &self.reserved);
+
+        let data: &dyn fmt::Debug = match self.r#type {
+            et::EVENT_HOOK_ENABLED | et::EVENT_HOOK_DISABLED => &(),
+
+            et::EVENT_KEY_TYPED
+            | et::EVENT_KEY_PRESSED
+            | et::EVENT_KEY_RELEASED => unsafe { &self.data.keyboard }
+
+            et::EVENT_MOUSE_CLICKED
+            | et::EVENT_MOUSE_PRESSED
+            | et::EVENT_MOUSE_RELEASED
+            | et::EVENT_MOUSE_MOVED
+            | et::EVENT_MOUSE_DRAGGED => unsafe { &self.data.mouse }
+
+            et::EVENT_MOUSE_WHEEL => unsafe { &self.data.wheel }
+        };
+
+        strt.field("data", data).finish()
+    }
+}
+
+impl PartialEq for uiohook_event {
+    fn eq(&self, other: &Self) -> bool {
+        use event_type as et;
+
+        if self.r#type != other.r#type
+            || self.time != other.time
+            || self.mask != other.mask
+            || self.reserved != other.reserved
+        {
+            return false;
+        };
+
+        match self.r#type {
+            et::EVENT_HOOK_ENABLED | et::EVENT_HOOK_DISABLED => true,
+
+            et::EVENT_KEY_TYPED
+            | et::EVENT_KEY_PRESSED
+            | et::EVENT_KEY_RELEASED => {
+                unsafe { self.data.keyboard == other.data.keyboard }
+            }
+
+            et::EVENT_MOUSE_CLICKED
+            | et::EVENT_MOUSE_PRESSED
+            | et::EVENT_MOUSE_RELEASED
+            | et::EVENT_MOUSE_MOVED
+            | et::EVENT_MOUSE_DRAGGED => {
+                unsafe { self.data.mouse == other.data.mouse }
+            }
+
+            et::EVENT_MOUSE_WHEEL => {
+                unsafe { self.data.wheel == other.data.wheel }
+            }
+        }
+    }
+}
+
+impl Eq for uiohook_event {}
+
+impl hash::Hash for uiohook_event {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        use event_type as et;
+
+        self.r#type.hash(state);
+        self.time.hash(state);
+        self.mask.hash(state);
+        self.reserved.hash(state);
+
+        match self.r#type {
+            et::EVENT_HOOK_ENABLED | et::EVENT_HOOK_DISABLED => {},
+
+            et::EVENT_KEY_TYPED
+            | et::EVENT_KEY_PRESSED
+            | et::EVENT_KEY_RELEASED => unsafe { self.data.keyboard }.hash(state),
+
+            et::EVENT_MOUSE_CLICKED
+            | et::EVENT_MOUSE_PRESSED
+            | et::EVENT_MOUSE_RELEASED
+            | et::EVENT_MOUSE_MOVED
+            | et::EVENT_MOUSE_DRAGGED => unsafe { self.data.mouse }.hash(state),
+
+            et::EVENT_MOUSE_WHEEL => unsafe { self.data.wheel }.hash(state),
+        };
+    }
+}
+
 pub type dispatcher_t = extern "C" fn(*const uiohook_event);
 
 /* End Virtual Event Types and Data Structures */
@@ -446,7 +546,6 @@ extern "C" {
     pub fn hook_stop() -> c_int;
 
     /// Retrieves an array of screen data for each available monitor.
-    // TODO(Unavailable): std::ptr::NonNull<c_uchar>?
     pub fn hook_create_screen_info(count: *mut c_uchar) -> *const screen_data;
 
     /// Retrieves the keyboard auto repeat rate.
