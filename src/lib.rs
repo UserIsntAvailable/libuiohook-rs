@@ -33,7 +33,3 @@
 // - hookrs
 //
 // DOCS(Unavailable): Available targets and OSes.
-//
-// DOCS(Unavailable): Port all examples
-
-pub mod raw;

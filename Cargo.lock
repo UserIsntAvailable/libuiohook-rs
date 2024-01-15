@@ -3,5 +3,9 @@
 version = 3
 
 [[package]]
-name = "libuiohook"
+name = "libuiohook-sys"
+version = "0.1.0+1.2.2"
+
+[[package]]
+name = "uiohook"
 version = "0.1.0"

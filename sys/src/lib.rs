@@ -1,10 +1,12 @@
 #![allow(non_camel_case_types)]
 
-//! Raw bindings for `libuiohook`.
+//! Raw bindings for [libuiohook](https://github.com/kwhat/libuiohook).
 
 // DOCS(Unavailable): Document all items.
 //
 // fn docs: https://github.com/kwhat/libuiohook/tree/1.2/man
+//
+// DOCS(Unavailable): Port all examples
 
 #[rustfmt::skip]
 mod inner {
