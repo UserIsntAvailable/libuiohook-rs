@@ -162,6 +162,7 @@ pub struct uiohook_event {
 }
 
 impl fmt::Debug for uiohook_event {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use event_type as et;
 
@@ -192,6 +193,7 @@ impl fmt::Debug for uiohook_event {
 }
 
 impl PartialEq for uiohook_event {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         use event_type as et;
 
@@ -230,6 +232,7 @@ impl PartialEq for uiohook_event {
 impl Eq for uiohook_event {}
 
 impl hash::Hash for uiohook_event {
+    #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         use event_type as et;
 

@@ -14,7 +14,7 @@
 // 1. feature gate (as a default feature) the high level API.
 //
 // A build.rs could compile and link `libuiohook` for the intendent target, and
-// error out if it fails (for wathever reason).
+// error out if it fails (for whatever reason).
 //
 // If a user wants to link their own libuiohook .so, they can use the
 // [package.links] option on their Cargo.toml.
