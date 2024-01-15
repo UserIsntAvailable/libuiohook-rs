@@ -2,5 +2,6 @@
 name = "libuiohook-sys"
 version = "0.1.0+1.2.2"
 edition = "2021"
+rust-version = "1.64" # core_ffi_c
 
 [dependencies]
